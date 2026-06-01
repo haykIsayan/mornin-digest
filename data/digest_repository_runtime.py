@@ -2,23 +2,30 @@
 import uuid
 
 from domain.repository.digest_repository import DigestRepository
+from domain.entity.digest_entity import DigestEntity
 
 
 class DigestRepositoryLocal(DigestRepository):
 
     def __init__(self):
-        self.batches = []
+        self.user_digests = {} 
  
-    def create_digest(self, articles: list[dict]) -> dict:
-        batch_id = str(uuid.uuid4())
-        newBatch = (batch_id, articles)
-        self.batches.append(newBatch)
-        return {"batch_id": batch_id, "articles": articles}
-     
-    def get_latest_digest(self) -> dict:
-        if not self.batches:
-            return {}
-        batch_id, articles = self.batches[-1]
-        return {"batch_id": batch_id, "articles": articles}     
+    def create_digest(self, userId: str, articles: list[dict]) -> DigestEntity:
+        digest_id = str(uuid.uuid4())
+        new_digest = DigestEntity(
+            digestId=digest_id, 
+            userId=userId, 
+            articles=articles
+        )
+        if userId not in self.user_digests:
+            self.user_digests[userId] = []
+        self.user_digests[userId].append(new_digest)
+        return new_digest
     
+     
+    def get_latest_digest(self, userId: str) -> DigestEntity:
+        if userId not in self.user_digests or not self.user_digests[userId]:
+            return None
+        latest_digest = self.user_digests[userId][-1]
+        return latest_digest     
     

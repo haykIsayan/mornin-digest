@@ -30,10 +30,10 @@ get_latest_digest_use_case = GetLatestDigestUseCase(
 def health():
     return {"status": "ok"}
 
-@app.post("/mornin")
-def mornin(request: MorninRequest):
+@app.post("/mornin/{user_id}")
+def mornin(user_id: str, request: MorninRequest):
     try:
-        digest = create_digest_use_case.execute(request.topics)
+        digest = create_digest_use_case.execute(user_id, request.topics)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -41,9 +41,9 @@ def mornin(request: MorninRequest):
     print(digest)
     return digest
 
-@app.get("/digest")
-def digest():
-    latest_digest = get_latest_digest_use_case.execute()
+@app.get("/digest/{user_id}")
+def digest(user_id: str):
+    latest_digest = get_latest_digest_use_case.execute(user_id)
     if not latest_digest:
-        raise HTTPException(status_code=404, detail="No digest found")
+        raise HTTPException(status_code=404, detail=f"No digest found for user {user_id}")
     return latest_digest
