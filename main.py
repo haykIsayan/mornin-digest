@@ -12,7 +12,6 @@ class MorninRequest(BaseModel):
 
 app = FastAPI()
 
-
 digest_repository_impl = DigestRepositoryLocal()
 
 articles_fetcher = ArticlesFetcher()

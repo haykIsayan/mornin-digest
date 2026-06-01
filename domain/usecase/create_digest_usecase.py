@@ -10,5 +10,5 @@ class CreateDigestUseCase:
 
     def execute(self, userId: str, topics: list[str]) -> DigestEntity:
         articles = self.articles_fetcher.fetch_articles(topics)
-        digest = self.digest_repository.create_digest(userId, articles)
+        digest = self.digest_repository.create_digest(userId, articles.get('articles', []))
         return digest
