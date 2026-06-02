@@ -1,5 +1,5 @@
-from domain.topic.entity.topic_entity import TopicEntity
-from domain.topic.repository.topic_repository import TopicRepository
+from topic.domain.entity.topic_entity import TopicEntity
+from topic.domain.repository.topic_repository import TopicRepository
 
 
 class GetAllTopicsUseCase:

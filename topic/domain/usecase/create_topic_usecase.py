@@ -1,4 +1,4 @@
-from domain.topic.repository.topic_repository import TopicRepository
+from topic.domain.repository.topic_repository import TopicRepository
 
 class CreateTopicUseCase:
     def __init__(self, topic_repository: TopicRepository):

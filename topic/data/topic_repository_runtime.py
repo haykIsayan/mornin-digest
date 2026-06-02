@@ -1,6 +1,7 @@
 import uuid
-from domain.topic.entity.topic_entity import TopicEntity
-from domain.topic.repository.topic_repository import TopicRepository
+
+from topic.domain.entity.topic_entity import TopicEntity
+from topic.domain.repository.topic_repository import TopicRepository
 
 
 class TopicRepositoryRuntime(TopicRepository):
@@ -14,8 +15,7 @@ class TopicRepositoryRuntime(TopicRepository):
         if userId not in self.topics:
             self.topics[userId] = []
         self.topics[userId].append(topic)
-        return topic    
-
+        return topic
 
     def get_all_topics(self, userId: str) -> list[TopicEntity]:
         return self.topics.get(userId, [])

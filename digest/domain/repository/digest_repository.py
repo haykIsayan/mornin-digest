@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from domain.digest.entity.digest_entity import DigestEntity
+from digest.domain.entity.digest_entity import DigestEntity
 
 class DigestRepository(ABC):
 
@@ -11,4 +11,3 @@ class DigestRepository(ABC):
     @abstractmethod
     def get_latest_digest(self, userId: str) -> DigestEntity:
         pass
-

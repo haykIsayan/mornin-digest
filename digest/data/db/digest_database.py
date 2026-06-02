@@ -57,7 +57,6 @@ def save_articles(articles: list[dict]) -> str:
 def get_latest_batch() -> list[dict]:
     conn = _get_connection()
 
-    # Find the most recent batch_id
     row = conn.execute(
         "SELECT batch_id FROM articles ORDER BY fetched_at DESC LIMIT 1"
     ).fetchone()
@@ -66,13 +65,10 @@ def get_latest_batch() -> list[dict]:
         conn.close()
         return []
 
-    # Get all articles from that batch
     rows = conn.execute(
         "SELECT topic, title, summary, source, url, published_date, fetched_at FROM articles WHERE batch_id = ?",
         (row["batch_id"],),
     ).fetchall()
 
     conn.close()
-
-    # Convert Row objects to regular dicts
     return [dict(r) for r in rows]

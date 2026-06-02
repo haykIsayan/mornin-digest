@@ -1,14 +1,14 @@
 
-from data.digest_repository_runtime import DigestRepositoryLocal
-from data.topic.topic_repository_runtime import TopicRepositoryRuntime
-from domain.digest.usecase.create_digest_usecase import CreateDigestUseCase
-from domain.digest.usecase.get_digest_usecase import GetDigestUseCase as GetLatestDigestUseCase
-from domain.topic.usecase.create_topic_usecase import CreateTopicUseCase
-from domain.topic.usecase.get_all_topics_usecase import GetAllTopicsUseCase
+from digest.data.digest_repository_runtime import DigestRepositoryLocal
+from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
+from digest.domain.usecase.get_digest_usecase import GetDigestUseCase as GetLatestDigestUseCase
+from topic.data.topic_repository_runtime import TopicRepositoryRuntime
+from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
+from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
-from fetcher.articles_fetcher import ArticlesFetcher
+from digest.fetcher.articles_fetcher import ArticlesFetcher
 
 class MorninRequest(BaseModel):
     topics: List[str]
@@ -74,6 +74,3 @@ def get_topics(user_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return topics
-
-
-
