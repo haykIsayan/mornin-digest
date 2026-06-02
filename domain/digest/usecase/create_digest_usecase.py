@@ -1,5 +1,5 @@
-from domain.entity.digest_entity import DigestEntity
-from domain.repository.digest_repository import DigestRepository
+from domain.digest.entity.digest_entity import DigestEntity
+from domain.digest.repository.digest_repository import DigestRepository
 from fetcher.articles_fetcher import ArticlesFetcher
 from datetime import datetime
 

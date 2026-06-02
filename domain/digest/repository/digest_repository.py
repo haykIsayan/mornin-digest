@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from domain.entity.digest_entity import DigestEntity
+from domain.digest.entity.digest_entity import DigestEntity
 
 class DigestRepository(ABC):
 

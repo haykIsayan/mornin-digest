@@ -1,6 +1,6 @@
 
-from domain.entity.digest_entity import DigestEntity
-from domain.repository.digest_repository import DigestRepository
+from domain.digest.entity.digest_entity import DigestEntity
+from domain.digest.repository.digest_repository import DigestRepository
 
 class GetDigestUseCase:
     def __init__(self, digest_repository: DigestRepository):
