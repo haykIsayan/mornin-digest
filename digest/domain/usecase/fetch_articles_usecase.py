@@ -1,4 +1,4 @@
-from fetcher.articles_fetcher import ArticlesFetcher
+from digest.fetcher.articles_fetcher import ArticlesFetcher
 
 class FetchArticlesUseCase:
     def __init__(self, articles_fetcher: ArticlesFetcher):
