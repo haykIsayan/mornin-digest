@@ -1,5 +1,6 @@
 
 from digest.data.digest_repository_runtime import DigestRepositoryLocal
+from digest.data.postgres_digest_repository import PostgresDigestRepository
 from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
 from digest.domain.usecase.fetch_articles_usecase import FetchArticlesUseCase
 from digest.domain.usecase.get_digest_usecase import GetDigestUseCase as GetLatestDigestUseCase
@@ -19,7 +20,8 @@ class CreateTopicRequest(BaseModel):
 
 app = FastAPI()
 
-digest_repository_impl = DigestRepositoryLocal()
+digest_repository_impl = PostgresDigestRepository()
+digest_repository_impl.init_db()  
 topic_repository_impl = TopicRepositoryRuntime()
 
 articles_fetcher = ArticlesFetcher()
