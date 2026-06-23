@@ -1,10 +1,9 @@
 
-from digest.data.digest_repository_runtime import DigestRepositoryLocal
 from digest.data.postgres_digest_repository import PostgresDigestRepository
 from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
 from digest.domain.usecase.fetch_articles_usecase import FetchArticlesUseCase
 from digest.domain.usecase.get_digest_usecase import GetDigestUseCase as GetLatestDigestUseCase
-from topic.data.topic_repository_runtime import TopicRepositoryRuntime
+from topic.data.postgres_topic_repository import TopicRepositoryPostgres
 from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
 from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
 from fastapi import FastAPI, HTTPException
@@ -22,7 +21,8 @@ app = FastAPI()
 
 digest_repository_impl = PostgresDigestRepository()
 digest_repository_impl.init_db()  
-topic_repository_impl = TopicRepositoryRuntime()
+topic_repository_impl = TopicRepositoryPostgres()
+topic_repository_impl.init_db()
 
 articles_fetcher = ArticlesFetcher()
 fetch_articles_use_case = FetchArticlesUseCase(articles_fetcher)
