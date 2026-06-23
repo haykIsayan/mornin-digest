@@ -32,37 +32,31 @@ class TopicRepositoryPostgres(TopicRepository):
         conn.close()
 
     def create_topic(self, user_id: str, name: str) -> TopicEntity:
-        conn = self._get_connection()
-        cursor = conn.cursor()
-
         topic_id = str(uuid.uuid4())
-
-        cursor.execute(
-            "INSERT INTO topics (id, user_id, name) VALUES (%s, %s, %s)",
-            (topic_id, user_id, name)
-        )
-
-        conn.commit()
-        cursor.close()
-        conn.close()
+        conn = self._get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "INSERT INTO topics (id, user_id, name) VALUES (%s, %s, %s)",
+                        (topic_id, user_id, name)
+                    )
+        finally:
+            conn.close()
 
         return TopicEntity(id=topic_id, name=name)
-    
+
     def get_all_topics(self, user_id: str) -> list[TopicEntity]:
         conn = self._get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            "SELECT id, name FROM topics WHERE user_id = %s",
-            (user_id,)
-        )
-
-        topics = [
-            TopicEntity(id=row[0], name=row[1])
-            for row in cursor.fetchall()
-        ]
-
-        cursor.close()
-        conn.close()
-
-        return topics
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id, name FROM topics WHERE user_id = %s",
+                    (user_id,)
+                )
+                return [
+                    TopicEntity(id=row[0], name=row[1])
+                    for row in cursor.fetchall()
+                ]
+        finally:
+            conn.close()
