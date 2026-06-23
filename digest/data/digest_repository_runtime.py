@@ -9,19 +9,19 @@ class DigestRepositoryLocal(DigestRepository):
     def __init__(self):
         self.user_digests = {}
 
-    def create_digest(self, userId: str, articles: list[dict]) -> DigestEntity:
+    def create_digest(self, user_id: str, articles: list[dict]) -> DigestEntity:
         digest_id = str(uuid.uuid4())
         new_digest = DigestEntity(
-            digestId=digest_id,
-            userId=userId,
+            digest_id=digest_id,
+            user_id=user_id,
             articles=articles
         )
-        if userId not in self.user_digests:
-            self.user_digests[userId] = []
-        self.user_digests[userId].append(new_digest)
+        if user_id not in self.user_digests:
+            self.user_digests[user_id] = []
+        self.user_digests[user_id].append(new_digest)
         return new_digest
 
-    def get_latest_digest(self, userId: str) -> DigestEntity:
-        if userId not in self.user_digests or not self.user_digests[userId]:
+    def get_latest_digest(self, user_id: str) -> DigestEntity:
+        if user_id not in self.user_digests or not self.user_digests[user_id]:
             return None
-        return self.user_digests[userId][-1]
+        return self.user_digests[user_id][-1]

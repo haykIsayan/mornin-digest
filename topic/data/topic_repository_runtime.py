@@ -9,13 +9,13 @@ class TopicRepositoryRuntime(TopicRepository):
     def __init__(self):
         self.topics = {}
 
-    def create_topic(self, userId: str, name: str) -> TopicEntity:
+    def create_topic(self, user_id: str, name: str) -> TopicEntity:
         id = str(uuid.uuid4())
         topic = TopicEntity(id=id, name=name)
-        if userId not in self.topics:
-            self.topics[userId] = []
-        self.topics[userId].append(topic)
+        if user_id not in self.topics:
+            self.topics[user_id] = []
+        self.topics[user_id].append(topic)
         return topic
 
-    def get_all_topics(self, userId: str) -> list[TopicEntity]:
-        return self.topics.get(userId, [])
+    def get_all_topics(self, user_id: str) -> list[TopicEntity]:
+        return self.topics.get(user_id, [])

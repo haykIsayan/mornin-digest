@@ -7,7 +7,7 @@ class CreateDigestUseCase:
         self.digest_repository = digest_repository
         self.fetch_articles_use_case = fetch_articles_use_case
 
-    def execute(self, userId: str, topics: list[str]) -> DigestEntity:
+    def execute(self, user_id: str, topics: list[str]) -> DigestEntity:
         articles = self.fetch_articles_use_case.execute(topics)
-        digest = self.digest_repository.create_digest(userId, articles.get('articles', []))
+        digest = self.digest_repository.create_digest(user_id, articles.get('articles', []))
         return digest
