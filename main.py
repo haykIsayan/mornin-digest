@@ -57,7 +57,7 @@ def digest(user_id: str):
         raise HTTPException(status_code=404, detail=f"No digest found for user {user_id}")
     return latest_digest
 
-@app.post("/topics/{user_id}")
+@app.post("/topics/{user_id}", status_code=201)
 def create_topic(user_id: str, request: CreateTopicRequest):
     try:
         topic = create_topic_use_case.execute(user_id, request.name)
