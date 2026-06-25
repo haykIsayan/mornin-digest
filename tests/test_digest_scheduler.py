@@ -60,7 +60,7 @@ class TestIsDeliveryTime:
 
 
 class TestCheckAndCreateDigests:
-    def test_creates_digest_for_user_when_itis_delivery_time(self):
+    def test_creates_digest_for_user_when_it_is_delivery_time(self):
         prefs = [make_preferences("u1", "07:30", "America/Los_Angeles")]
         scheduler, get_all_preferences, _, create_digest = make_scheduler(preferences=prefs)
 
