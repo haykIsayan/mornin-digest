@@ -21,11 +21,19 @@ class DigestScheduler:
         self.scheduler = BackgroundScheduler()
 
     def start(self):
-        self.scheduler.add_job(
-            self._check_and_create_digests,
-            trigger="interval",
-            minutes=1
-        )
+        if self.scheduler.running:
+            return
+
+        if self.scheduler.get_job("digest_check") is None:
+            self.scheduler.add_job(
+                self._check_and_create_digests,
+                trigger="interval",
+                minutes=1,
+                id="digest_check",
+                max_instances=1,
+                coalesce=True,
+            )
+
         self.scheduler.start()
         print("Scheduler started — checking for digests every minute")
 
