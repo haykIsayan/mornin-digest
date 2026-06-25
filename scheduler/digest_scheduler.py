@@ -48,9 +48,13 @@ class DigestScheduler:
                 self._create_digest_for_user(preferences.user_id)
 
     def is_delivery_time(self, delivery_time: str, timezone: str) -> bool:
-        user_now = datetime.now(ZoneInfo(timezone))
-        current_time = user_now.strftime("%H:%M")
-        return current_time == delivery_time
+        try:
+            user_now = datetime.now(ZoneInfo(timezone))
+            target_hour, target_minute = map(int, delivery_time.split(":"))
+        except Exception:
+            return False
+
+        return user_now.hour == target_hour and user_now.minute == target_minute
 
     def _create_digest_for_user(self, user_id: str):
         try:
