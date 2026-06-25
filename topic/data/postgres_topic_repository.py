@@ -11,7 +11,8 @@ class TopicRepositoryPostgres(TopicRepository):
 
     def __init__(self):
         self.database_url = os.getenv("DATABASE_URL")
-
+        if not self.database_url:
+            raise RuntimeError("DATABASE_URL environment variable is required")
     def _get_connection(self):
         return psycopg2.connect(self.database_url)
     
