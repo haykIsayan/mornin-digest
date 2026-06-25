@@ -1,6 +1,7 @@
 import psycopg2
 import uuid
 import os
+from typing import Optional
 from dotenv import load_dotenv
 from auth.domain.entity.user_entity import UserEntity
 from auth.domain.repository.user_repository import UserRepository
@@ -32,7 +33,7 @@ class PostgresUserRepository(UserRepository):
         cursor.close()
         conn.close()
 
-    def find_by_phone(self, phone_number: str) -> UserEntity | None:
+    def find_by_phone(self, phone_number: str) -> Optional[UserEntity]:
         conn = self._get_connection()
         cursor = conn.cursor()
 

@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class VerifyOtpUseCase:
 
     def __init__(self, otp_store, user_repository, token_service):
@@ -5,7 +8,7 @@ class VerifyOtpUseCase:
         self.user_repository = user_repository
         self.token_service = token_service
 
-    def execute(self, phone_number: str, code: str) -> dict | None:
+    def execute(self, phone_number: str, code: str) -> Optional[dict]:
         if not self.otp_store.verify_otp(phone_number, code):
             return None
 

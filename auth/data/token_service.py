@@ -1,6 +1,7 @@
 import jwt
 import os
 from datetime import datetime, timedelta
+from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,7 +21,7 @@ class TokenService:
         }
         return jwt.encode(payload, self.secret, algorithm=_JWT_ALGORITHM)
 
-    def verify_token(self, token: str) -> str | None:
+    def verify_token(self, token: str) -> Optional[str]:
         try:
             payload = jwt.decode(token, self.secret, algorithms=[_JWT_ALGORITHM])
             return payload["user_id"]
