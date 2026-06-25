@@ -22,8 +22,8 @@ class CreateTopicRequest(BaseModel):
     name: str
 
 class SavePreferencesRequest(BaseModel):
-    delivery_time: str  
-    timezone: str       
+    delivery_time: str
+    timezone: str
 
 app = FastAPI()
 
