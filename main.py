@@ -15,6 +15,10 @@ from pydantic import BaseModel
 from typing import List
 from digest.fetcher.articles_fetcher import ArticlesFetcher
 
+
+from preferences.domain.usecase.get_all_preferences_usecase import GetAllPreferencesUseCase
+from scheduler.digest_scheduler import DigestScheduler
+
 class MorninRequest(BaseModel):
     topics: List[str]
 
@@ -52,6 +56,23 @@ get_latest_digest_use_case = GetLatestDigestUseCase(
 
 create_topic_use_case = CreateTopicUseCase(topic_repository_impl)
 get_all_topics_use_case = GetAllTopicsUseCase(topic_repository_impl)
+
+get_all_preferences_use_case = GetAllPreferencesUseCase(preferences_repository_impl)
+
+digest_scheduler = DigestScheduler(
+    get_all_preferences_use_case=get_all_preferences_use_case,
+    get_all_topics_use_case=get_all_topics_use_case,
+    create_digest_use_case=create_digest_use_case
+)
+
+@app.on_event("startup")
+def _start_digest_scheduler():
+    digest_scheduler.start()
+
+@app.on_event("shutdown")
+def _stop_digest_scheduler():
+    if digest_scheduler.scheduler.running:
+        digest_scheduler.scheduler.shutdown(wait=False)
 
 @app.get("/health")
 def health():
