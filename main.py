@@ -1,9 +1,13 @@
 
-from digest.data.digest_repository_runtime import DigestRepositoryLocal
+from digest.data.postgres_digest_repository import PostgresDigestRepository
 from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
 from digest.domain.usecase.fetch_articles_usecase import FetchArticlesUseCase
 from digest.domain.usecase.get_digest_usecase import GetDigestUseCase as GetLatestDigestUseCase
-from topic.data.topic_repository_runtime import TopicRepositoryRuntime
+from preferences.data.postgres_user_preferences_repository import PostgresUserPreferencesRepository
+from preferences.domain.entity.user_preferences_entity import UserPreferencesEntity
+from preferences.domain.usecase.get_preferences_usecase import GetPreferencesUseCase
+from preferences.domain.usecase.save_preferences_usecase import SavePreferencesUseCase
+from topic.data.postgres_topic_repository import TopicRepositoryPostgres
 from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
 from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
 from fastapi import FastAPI, HTTPException
@@ -17,10 +21,22 @@ class MorninRequest(BaseModel):
 class CreateTopicRequest(BaseModel):
     name: str
 
+class SavePreferencesRequest(BaseModel):
+    delivery_time: str
+    timezone: str
+
 app = FastAPI()
 
-digest_repository_impl = DigestRepositoryLocal()
-topic_repository_impl = TopicRepositoryRuntime()
+digest_repository_impl = PostgresDigestRepository()
+digest_repository_impl.init_db()  
+topic_repository_impl = TopicRepositoryPostgres()
+topic_repository_impl.init_db()
+
+preferences_repository_impl = PostgresUserPreferencesRepository()
+preferences_repository_impl.init_db()
+
+save_preferences_use_case = SavePreferencesUseCase(preferences_repository_impl)
+get_preferences_use_case = GetPreferencesUseCase(preferences_repository_impl)
 
 articles_fetcher = ArticlesFetcher()
 fetch_articles_use_case = FetchArticlesUseCase(articles_fetcher)
@@ -76,3 +92,27 @@ def get_topics(user_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return topics
+
+
+@app.post("/preferences/{user_id}")
+def save_preferences(user_id: str, request: SavePreferencesRequest):
+    try:
+        preferences = UserPreferencesEntity(
+            user_id=user_id,
+            delivery_time=request.delivery_time,
+            timezone=request.timezone
+        )
+        result = save_preferences_use_case.execute(preferences)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/preferences/{user_id}")
+def get_preferences(user_id: str):
+    result = get_preferences_use_case.execute(user_id)
+    if not result:
+        raise HTTPException(status_code=404, detail=f"No preferences found for user {user_id}")
+    return result
+
+

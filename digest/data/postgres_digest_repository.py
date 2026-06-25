@@ -1,6 +1,7 @@
 import psycopg2
 import uuid
 import os
+from typing import Optional
 from dotenv import load_dotenv
 
 from digest.domain.entity.digest_entity import DigestEntity
@@ -81,7 +82,7 @@ class PostgresDigestRepository(DigestRepository):
 
         return entity
 
-    def get_latest_digest(self, user_id: str) -> DigestEntity | None:
+    def get_latest_digest(self, user_id: str) -> Optional[DigestEntity]:
         conn = self._get_connection()
         try:
             with conn.cursor() as cursor:
