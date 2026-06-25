@@ -64,7 +64,15 @@ digest_scheduler = DigestScheduler(
     get_all_topics_use_case=get_all_topics_use_case,
     create_digest_use_case=create_digest_use_case
 )
-digest_scheduler.start()
+
+@app.on_event("startup")
+def _start_digest_scheduler():
+    digest_scheduler.start()
+
+@app.on_event("shutdown")
+def _stop_digest_scheduler():
+    if digest_scheduler.scheduler.running:
+        digest_scheduler.scheduler.shutdown(wait=False)
 
 @app.get("/health")
 def health():
