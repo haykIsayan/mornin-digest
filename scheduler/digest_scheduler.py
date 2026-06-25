@@ -57,5 +57,6 @@ class DigestScheduler:
             self.create_digest_use_case.execute(user_id, topic_names)
             print(f"Digest created for {user_id}")
 
-        except Exception as e:
-            print(f"Failed to create digest for {user_id}: {e}")
+        except Exception:
+            import traceback
+            print(f"Failed to create digest for {user_id}:\n{traceback.format_exc()}")
