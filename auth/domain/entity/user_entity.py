@@ -1,5 +1,5 @@
 class UserEntity:
-    def __init__(self, id: str, email: str, password_hash: str):
+    def __init__(self, id: str, phone_number: str, name: str = None):
         self.id = id
-        self.email = email
-        self.password_hash = password_hash
+        self.phone_number = phone_number
+        self.name = name
