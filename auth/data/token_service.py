@@ -4,12 +4,14 @@ from datetime import datetime, timedelta
 from typing import Optional
 from dotenv import load_dotenv
 
+from auth.domain.token_service import TokenService
+
 load_dotenv()
 
 _JWT_ALGORITHM = "HS256"
 
 
-class TokenService:
+class JwtTokenService(TokenService):
 
     def __init__(self):
         self.secret = os.getenv("JWT_SECRET")

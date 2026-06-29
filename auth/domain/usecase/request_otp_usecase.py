@@ -1,9 +1,10 @@
 from auth.domain.otp_sender import OtpSender
+from auth.domain.otp_store import OtpStore
 
 
 class RequestOtpUseCase:
 
-    def __init__(self, otp_sender: OtpSender, otp_store):
+    def __init__(self, otp_sender: OtpSender, otp_store: OtpStore):
         self.otp_sender = otp_sender
         self.otp_store = otp_store
 

@@ -1,7 +1,7 @@
 from fastapi import Request, HTTPException
-from auth.data.token_service import TokenService
+from auth.data.token_service import JwtTokenService
 
-token_service = TokenService()
+token_service = JwtTokenService()
 
 
 def get_current_user(request: Request) -> str:

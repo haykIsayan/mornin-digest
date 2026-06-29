@@ -1,7 +1,7 @@
 
 from auth.data.email_sender import EmailSender
-from auth.data.otp_store import OtpStore
-from auth.data.token_service import TokenService
+from auth.data.otp_store import RedisOtpStore
+from auth.data.token_service import JwtTokenService
 from auth.domain.usecase.request_otp_usecase import RequestOtpUseCase
 from auth.domain.usecase.verify_otp_usecase import VerifyOtpUseCase
 from auth.data.postgres_user_repository import PostgresUserRepository
@@ -49,8 +49,8 @@ user_repository_impl = PostgresUserRepository()
 user_repository_impl.init_db()
 
 email_sender = EmailSender()
-otp_store = OtpStore()
-token_service = TokenService()
+otp_store = RedisOtpStore()
+token_service = JwtTokenService()
 
 request_otp_use_case = RequestOtpUseCase(otp_sender=email_sender, otp_store=otp_store)
 verify_otp_use_case = VerifyOtpUseCase(otp_store, user_repository_impl, token_service)

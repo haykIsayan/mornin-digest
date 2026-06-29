@@ -1,9 +1,13 @@
 from typing import Optional
 
+from auth.domain.otp_store import OtpStore
+from auth.domain.repository.user_repository import UserRepository
+from auth.domain.token_service import TokenService
+
 
 class VerifyOtpUseCase:
 
-    def __init__(self, otp_store, user_repository, token_service):
+    def __init__(self, otp_store: OtpStore, user_repository: UserRepository, token_service: TokenService):
         self.otp_store = otp_store
         self.user_repository = user_repository
         self.token_service = token_service
