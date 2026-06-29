@@ -20,4 +20,4 @@ class EmailSender(OtpSender):
             "subject": "Your Mornin' code",
             "html": f"<p>Your verification code is: <strong>{code}</strong></p>"
         })
-        print(f"Sending OTP {code} to {recipient}")
+        print(f"Sending OTP to {recipient}")
