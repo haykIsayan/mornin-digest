@@ -15,6 +15,8 @@ class JwtTokenService(TokenService):
 
     def __init__(self):
         self.secret = os.getenv("JWT_SECRET")
+        if not self.secret:
+            raise RuntimeError("JWT_SECRET environment variable is required")
 
     def create_token(self, user_id: str) -> str:
         payload = {
