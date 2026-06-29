@@ -1,4 +1,10 @@
 
+from auth.data.email_sender import EmailSender
+from auth.data.otp_store import RedisOtpStore
+from auth.data.token_service import JwtTokenService
+from auth.domain.usecase.request_otp_usecase import RequestOtpUseCase
+from auth.domain.usecase.verify_otp_usecase import VerifyOtpUseCase
+from auth.data.postgres_user_repository import PostgresUserRepository
 from digest.data.postgres_digest_repository import PostgresDigestRepository
 from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
 from digest.domain.usecase.fetch_articles_usecase import FetchArticlesUseCase
@@ -10,7 +16,8 @@ from preferences.domain.usecase.save_preferences_usecase import SavePreferencesU
 from topic.data.postgres_topic_repository import TopicRepositoryPostgres
 from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
 from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from auth.api.auth_middleware import get_current_user
 from pydantic import BaseModel
 from typing import List
 from digest.fetcher.articles_fetcher import ArticlesFetcher
@@ -18,6 +25,13 @@ from digest.fetcher.articles_fetcher import ArticlesFetcher
 
 from preferences.domain.usecase.get_all_preferences_usecase import GetAllPreferencesUseCase
 from scheduler.digest_scheduler import DigestScheduler
+
+class RequestOtpRequest(BaseModel):
+    otp_recipient: str
+
+class VerifyOtpRequest(BaseModel):
+    otp_recipient: str
+    code: str
 
 class MorninRequest(BaseModel):
     topics: List[str]
@@ -30,6 +44,16 @@ class SavePreferencesRequest(BaseModel):
     timezone: str
 
 app = FastAPI()
+
+user_repository_impl = PostgresUserRepository()
+user_repository_impl.init_db()
+
+email_sender = EmailSender()
+otp_store = RedisOtpStore()
+token_service = JwtTokenService()
+
+request_otp_use_case = RequestOtpUseCase(otp_sender=email_sender, otp_store=otp_store)
+verify_otp_use_case = VerifyOtpUseCase(otp_store, user_repository_impl, token_service)
 
 digest_repository_impl = PostgresDigestRepository()
 digest_repository_impl.init_db()  
@@ -78,8 +102,8 @@ def _stop_digest_scheduler():
 def health():
     return {"status": "ok"}
 
-@app.post("/digest/{user_id}")
-def create_digest(user_id: str, request: MorninRequest):
+@app.post("/digest")
+def create_digest(request: MorninRequest, user_id: str = Depends(get_current_user)):
     try:
         digest = create_digest_use_case.execute(user_id, request.topics)
     except ValueError as e:
@@ -89,15 +113,15 @@ def create_digest(user_id: str, request: MorninRequest):
     print(digest)
     return digest
 
-@app.get("/digest/{user_id}")
-def get_digest(user_id: str):
+@app.get("/digest")
+def get_digest(user_id: str = Depends(get_current_user)):
     latest_digest = get_latest_digest_use_case.execute(user_id)
     if not latest_digest:
         raise HTTPException(status_code=404, detail=f"No digest found for user {user_id}")
     return latest_digest
 
-@app.post("/topics/{user_id}", status_code=201)
-def create_topic(user_id: str, request: CreateTopicRequest):
+@app.post("/topics", status_code=201)
+def create_topic(request: CreateTopicRequest, user_id: str = Depends(get_current_user)):
     try:
         topic = create_topic_use_case.execute(user_id, request.name)
     except ValueError as e:
@@ -106,8 +130,8 @@ def create_topic(user_id: str, request: CreateTopicRequest):
         raise HTTPException(status_code=500, detail=str(e))
     return topic
 
-@app.get("/topics/{user_id}")
-def get_topics(user_id: str):
+@app.get("/topics")
+def get_topics(user_id: str = Depends(get_current_user)):
     try:
         topics = get_all_topics_use_case.execute(user_id)
     except Exception as e:
@@ -115,8 +139,8 @@ def get_topics(user_id: str):
     return topics
 
 
-@app.post("/preferences/{user_id}")
-def save_preferences(user_id: str, request: SavePreferencesRequest):
+@app.post("/preferences")
+def save_preferences(request: SavePreferencesRequest, user_id: str = Depends(get_current_user)):
     try:
         preferences = UserPreferencesEntity(
             user_id=user_id,
@@ -129,11 +153,27 @@ def save_preferences(user_id: str, request: SavePreferencesRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/preferences/{user_id}")
-def get_preferences(user_id: str):
+@app.get("/preferences")
+def get_preferences(user_id: str = Depends(get_current_user)):
     result = get_preferences_use_case.execute(user_id)
     if not result:
         raise HTTPException(status_code=404, detail=f"No preferences found for user {user_id}")
+    return result
+
+
+@app.post("/auth/request-otp")
+def request_otp(request: RequestOtpRequest):
+    try:
+        request_otp_use_case.execute(request.otp_recipient)
+        return {"message": "OTP sent"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/auth/verify-otp")
+def verify_otp(request: VerifyOtpRequest):
+    result = verify_otp_use_case.execute(request.otp_recipient, request.code)
+    if not result:
+        raise HTTPException(status_code=401, detail="Invalid or expired code")
     return result
 
 
