@@ -8,3 +8,4 @@ apscheduler
 twilio
 redis
 PyJWT
+resend
