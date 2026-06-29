@@ -14,8 +14,10 @@ from preferences.domain.entity.user_preferences_entity import UserPreferencesEnt
 from preferences.domain.usecase.get_preferences_usecase import GetPreferencesUseCase
 from preferences.domain.usecase.save_preferences_usecase import SavePreferencesUseCase
 from topic.data.postgres_topic_repository import TopicRepositoryPostgres
+from topic.data.default_topic_repository_impl import DefaultTopicRepositoryImpl
 from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
 from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
+from topic.domain.usecase.get_default_topics_usecase import GetDefaultTopicsUseCase
 from fastapi import FastAPI, HTTPException, Depends
 from auth.api.auth_middleware import get_current_user
 from pydantic import BaseModel
@@ -80,6 +82,7 @@ get_latest_digest_use_case = GetLatestDigestUseCase(
 
 create_topic_use_case = CreateTopicUseCase(topic_repository_impl)
 get_all_topics_use_case = GetAllTopicsUseCase(topic_repository_impl)
+get_default_topics_use_case = GetDefaultTopicsUseCase(DefaultTopicRepositoryImpl())
 
 get_all_preferences_use_case = GetAllPreferencesUseCase(preferences_repository_impl)
 
@@ -129,6 +132,10 @@ def create_topic(request: CreateTopicRequest, user_id: str = Depends(get_current
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return topic
+
+@app.get("/topics/defaults")
+def get_default_topics():
+    return get_default_topics_use_case.execute()
 
 @app.get("/topics")
 def get_topics(user_id: str = Depends(get_current_user)):
