@@ -14,6 +14,8 @@ resend.api_key = api_key
 class EmailSender(OtpSender):
 
     def send_otp(self, recipient: str, code: str):
+        if not resend.api_key:
+            raise RuntimeError("RESEND_API_KEY environment variable is required")
         resend.Emails.send({
             "from": "Mornin' <onboarding@resend.dev>",
             "to": [recipient],
