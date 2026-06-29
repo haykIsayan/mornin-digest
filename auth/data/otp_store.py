@@ -1,6 +1,6 @@
-import random
 import redis
 import os
+import secrets
 from dotenv import load_dotenv
 
 from auth.domain.otp_store import OtpStore
@@ -17,7 +17,7 @@ class RedisOtpStore(OtpStore):
         self.redis = redis.from_url(redis_url)
 
     def generate_otp_code(self) -> str:
-        return str(random.randint(100000, 999999))
+        return str(secrets.randbelow(900000) + 100000)
 
     def save_otp(self, recipient: str, code: str):
         self.redis.setex(
