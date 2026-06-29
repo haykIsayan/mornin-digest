@@ -11,3 +11,7 @@ class TopicRepository(ABC):
     @abstractmethod
     def create_topic(self, user_id: str, name: str) -> TopicEntity:
         pass
+
+    @abstractmethod
+    def delete_topic(self, user_id: str, topic_id: str) -> None:
+        pass

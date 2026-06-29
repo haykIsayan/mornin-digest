@@ -16,6 +16,7 @@ from preferences.domain.usecase.save_preferences_usecase import SavePreferencesU
 from topic.data.postgres_topic_repository import TopicRepositoryPostgres
 from topic.data.default_topic_repository_impl import DefaultTopicRepositoryImpl
 from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
+from topic.domain.usecase.delete_topic_usecase import DeleteTopicUseCase
 from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
 from topic.domain.usecase.get_default_topics_usecase import GetDefaultTopicsUseCase
 from fastapi import FastAPI, HTTPException, Depends
@@ -81,6 +82,7 @@ get_latest_digest_use_case = GetLatestDigestUseCase(
 )
 
 create_topic_use_case = CreateTopicUseCase(topic_repository_impl)
+delete_topic_use_case = DeleteTopicUseCase(topic_repository_impl)
 get_all_topics_use_case = GetAllTopicsUseCase(topic_repository_impl)
 get_default_topics_use_case = GetDefaultTopicsUseCase(DefaultTopicRepositoryImpl())
 
@@ -132,6 +134,14 @@ def create_topic(request: CreateTopicRequest, user_id: str = Depends(get_current
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return topic
+
+@app.delete("/topics/{topic_id}")
+def delete_topic(topic_id: str, user_id: str = Depends(get_current_user)):
+    try:
+        delete_topic_use_case.execute(user_id, topic_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"message": "Topic deleted"}
 
 @app.get("/topics/defaults")
 def get_default_topics():

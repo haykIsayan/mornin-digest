@@ -19,3 +19,9 @@ class TopicRepositoryRuntime(TopicRepository):
 
     def get_all_topics(self, user_id: str) -> list[TopicEntity]:
         return self.topics.get(user_id, [])
+
+    def delete_topic(self, user_id: str, topic_id: str) -> None:
+        self.topics[user_id] = [
+            topic for topic in self.topics.get(user_id, [])
+            if topic.id != topic_id
+        ]

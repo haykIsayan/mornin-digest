@@ -61,3 +61,15 @@ class TopicRepositoryPostgres(TopicRepository):
                 ]
         finally:
             conn.close()
+
+    def delete_topic(self, user_id: str, topic_id: str) -> None:
+        conn = self._get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "DELETE FROM topics WHERE id = %s AND user_id = %s",
+                        (topic_id, user_id)
+                    )
+        finally:
+            conn.close()

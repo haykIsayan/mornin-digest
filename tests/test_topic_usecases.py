@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 from topic.domain.entity.topic_entity import TopicEntity
 from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
+from topic.domain.usecase.delete_topic_usecase import DeleteTopicUseCase
 from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
 
 
@@ -42,3 +43,14 @@ class TestGetAllTopicsUseCase:
         result = use_case.execute("u1")
 
         assert result == []
+
+
+class TestDeleteTopicUseCase:
+    def test_deletes_topic_for_user(self):
+        repo = MagicMock()
+        use_case = DeleteTopicUseCase(repo)
+
+        result = use_case.execute("u1", "t1")
+
+        repo.delete_topic.assert_called_once_with("u1", "t1")
+        assert result is None
