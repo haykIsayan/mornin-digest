@@ -11,7 +11,10 @@ load_dotenv()
 class RedisOtpStore(OtpStore):
 
     def __init__(self):
-        self.redis = redis.from_url(os.getenv("UPSTASH_REDIS_URL"))
+        redis_url = os.getenv("UPSTASH_REDIS_URL")
+        if not redis_url:
+            raise RuntimeError("UPSTASH_REDIS_URL environment variable is required")
+        self.redis = redis.from_url(redis_url)
 
     def generate_otp_code(self) -> str:
         return str(random.randint(100000, 999999))
