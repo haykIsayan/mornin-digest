@@ -194,8 +194,10 @@ def save_device_token(request: DeviceTokenRequest, user_id: str = Depends(get_cu
     try:
         device_token_repository_impl.save_token(user_id, request.token)
         return {"message": "Device token saved"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        import traceback
+        print(f"Failed to save device token for {user_id}:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Failed to save device token")
 
 
 @app.post("/auth/request-otp")
