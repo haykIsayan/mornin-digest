@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from preferences.domain.usecase.get_all_preferences_usecase import GetAllPreferencesUseCase
 from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
 from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
+from notifier.domain.digest_notifier import DigestNotifier
 
 
 class DigestScheduler:
@@ -13,11 +14,13 @@ class DigestScheduler:
         self,
         get_all_preferences_use_case: GetAllPreferencesUseCase,
         get_all_topics_use_case: GetAllTopicsUseCase,
-        create_digest_use_case: CreateDigestUseCase
+        create_digest_use_case: CreateDigestUseCase,
+        digest_notifier: DigestNotifier
     ):
         self.get_all_preferences_use_case = get_all_preferences_use_case
         self.get_all_topics_use_case = get_all_topics_use_case
         self.create_digest_use_case = create_digest_use_case
+        self.digest_notifier = digest_notifier
         self.scheduler = BackgroundScheduler()
 
     def start(self):
@@ -66,9 +69,16 @@ class DigestScheduler:
 
             topic_names = [topic.name for topic in topics]
 
-            self.create_digest_use_case.execute(user_id, topic_names)
+            digest = self.create_digest_use_case.execute(user_id, topic_names)
             print(f"Digest created for {user_id}")
 
         except Exception:
             import traceback
             print(f"Failed to create digest for {user_id}:\n{traceback.format_exc()}")
+            return
+
+        try:
+            self.digest_notifier.notify(user_id, digest)
+        except Exception:
+            import traceback
+            print(f"Failed to send notification for {user_id}:\n{traceback.format_exc()}")

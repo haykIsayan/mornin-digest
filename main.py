@@ -19,6 +19,8 @@ from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
 from topic.domain.usecase.delete_topic_usecase import DeleteTopicUseCase
 from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
 from topic.domain.usecase.get_default_topics_usecase import GetDefaultTopicsUseCase
+from user.data.postgres_device_token_repository import PostgresDeviceTokenRepository
+from notifier.data.push_digest_notifier import PushDigestNotifier
 from fastapi import FastAPI, HTTPException, Depends
 from auth.api.auth_middleware import get_current_user
 from pydantic import BaseModel
@@ -46,6 +48,9 @@ class SavePreferencesRequest(BaseModel):
     delivery_time: str
     timezone: str
 
+class DeviceTokenRequest(BaseModel):
+    token: str
+
 app = FastAPI()
 
 user_repository_impl = PostgresUserRepository()
@@ -65,6 +70,9 @@ topic_repository_impl.init_db()
 
 preferences_repository_impl = PostgresUserPreferencesRepository()
 preferences_repository_impl.init_db()
+
+device_token_repository_impl = PostgresDeviceTokenRepository()
+device_token_repository_impl.init_db()
 
 save_preferences_use_case = SavePreferencesUseCase(preferences_repository_impl)
 get_preferences_use_case = GetPreferencesUseCase(preferences_repository_impl)
@@ -88,10 +96,13 @@ get_default_topics_use_case = GetDefaultTopicsUseCase(DefaultTopicRepositoryImpl
 
 get_all_preferences_use_case = GetAllPreferencesUseCase(preferences_repository_impl)
 
+push_notifier = PushDigestNotifier(device_token_repository_impl)
+
 digest_scheduler = DigestScheduler(
     get_all_preferences_use_case=get_all_preferences_use_case,
     get_all_topics_use_case=get_all_topics_use_case,
-    create_digest_use_case=create_digest_use_case
+    create_digest_use_case=create_digest_use_case,
+    digest_notifier=push_notifier
 )
 
 @app.on_event("startup")
@@ -176,6 +187,17 @@ def get_preferences(user_id: str = Depends(get_current_user)):
     if not result:
         raise HTTPException(status_code=404, detail=f"No preferences found for user {user_id}")
     return result
+
+
+@app.post("/device-token")
+def save_device_token(request: DeviceTokenRequest, user_id: str = Depends(get_current_user)):
+    try:
+        device_token_repository_impl.save_token(user_id, request.token)
+        return {"message": "Device token saved"}
+    except Exception:
+        import traceback
+        print(f"Failed to save device token for {user_id}:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Failed to save device token")
 
 
 @app.post("/auth/request-otp")
