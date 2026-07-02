@@ -71,8 +71,14 @@ class DigestScheduler:
 
             digest = self.create_digest_use_case.execute(user_id, topic_names)
             print(f"Digest created for {user_id}")
-            self.digest_notifier.notify(user_id, digest)
 
         except Exception:
             import traceback
             print(f"Failed to create digest for {user_id}:\n{traceback.format_exc()}")
+            return
+
+        try:
+            self.digest_notifier.notify(user_id, digest)
+        except Exception:
+            import traceback
+            print(f"Failed to send notification for {user_id}:\n{traceback.format_exc()}")
