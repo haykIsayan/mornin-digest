@@ -27,10 +27,6 @@ class PushDigestNotifier(DigestNotifier):
     def _init_firebase(self):
         credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
         credentials_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
-        if not credentials_path:
-            raise RuntimeError("FIREBASE_CREDENTIALS_PATH environment variable is required")
-        if not os.path.exists(credentials_path):
-            raise RuntimeError(f"Firebase credentials file not found at {credentials_path}")
         
         if credentials_path and os.path.exists(credentials_path):
             cred = credentials.Certificate(credentials_path)
