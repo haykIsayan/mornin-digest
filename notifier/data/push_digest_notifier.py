@@ -37,7 +37,7 @@ class PushDigestNotifier(DigestNotifier):
             data={
                 "type": "digest",
                 "digest_id": str(digest.digest_id),
-            }
+            },
             token=device_token.token
         )
         messaging.send(message)
