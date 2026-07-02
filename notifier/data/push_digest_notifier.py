@@ -12,10 +12,17 @@ class PushDigestNotifier(DigestNotifier):
 
     def __init__(self, device_token_repository):
         self.device_token_repository = device_token_repository
-        cred = credentials.Certificate(os.getenv("FIREBASE_CREDENTIALS_PATH"))
-        if not cred:
+        credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+        if not credentials_path:
             raise RuntimeError("FIREBASE_CREDENTIALS_PATH environment variable is required")
-        firebase_admin.initialize_app(cred)
+        if not os.path.exists(credentials_path):
+            raise RuntimeError(f"Firebase credentials file not found at {credentials_path}")
+
+        cred = credentials.Certificate(credentials_path)
+        try:
+            firebase_admin.get_app()
+        except ValueError:
+            firebase_admin.initialize_app(cred)
 
     def notify(self, user_id: str, digest: DigestEntity):
         device_token = self.device_token_repository.get_token(user_id)
