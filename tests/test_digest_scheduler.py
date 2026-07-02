@@ -15,8 +15,9 @@ def make_scheduler(preferences=None, topics=None):
     get_all_topics.execute.return_value = topics or []
 
     create_digest = MagicMock()
+    digest_notifier = MagicMock()
 
-    scheduler = DigestScheduler(get_all_preferences, get_all_topics, create_digest)
+    scheduler = DigestScheduler(get_all_preferences, get_all_topics, create_digest, digest_notifier)
     return scheduler, get_all_preferences, get_all_topics, create_digest
 
 
