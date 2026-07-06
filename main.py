@@ -1,10 +1,3 @@
-
-from auth.data.email_sender import EmailSender
-from auth.data.otp_store import RedisOtpStore
-from auth.data.token_service import JwtTokenService
-from auth.domain.usecase.request_otp_usecase import RequestOtpUseCase
-from auth.domain.usecase.verify_otp_usecase import VerifyOtpUseCase
-from auth.data.postgres_user_repository import PostgresUserRepository
 from digest.data.postgres_digest_repository import PostgresDigestRepository
 from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
 from digest.domain.usecase.fetch_articles_usecase import FetchArticlesUseCase
@@ -28,15 +21,11 @@ from typing import List
 from digest.fetcher.articles_fetcher import ArticlesFetcher
 
 
+from auth.auth_routes import router as auth_router
+
+
 from preferences.domain.usecase.get_all_preferences_usecase import GetAllPreferencesUseCase
 from scheduler.digest_scheduler import DigestScheduler
-
-class RequestOtpRequest(BaseModel):
-    otp_recipient: str
-
-class VerifyOtpRequest(BaseModel):
-    otp_recipient: str
-    code: str
 
 class MorninRequest(BaseModel):
     topics: List[str]
@@ -53,15 +42,7 @@ class DeviceTokenRequest(BaseModel):
 
 app = FastAPI()
 
-user_repository_impl = PostgresUserRepository()
-user_repository_impl.init_db()
-
-email_sender = EmailSender()
-otp_store = RedisOtpStore()
-token_service = JwtTokenService()
-
-request_otp_use_case = RequestOtpUseCase(otp_sender=email_sender, otp_store=otp_store)
-verify_otp_use_case = VerifyOtpUseCase(otp_store, user_repository_impl, token_service)
+app.include_router(auth_router, tags=["auth"])
 
 digest_repository_impl = PostgresDigestRepository()
 digest_repository_impl.init_db()  
@@ -198,21 +179,6 @@ def save_device_token(request: DeviceTokenRequest, user_id: str = Depends(get_cu
         import traceback
         print(f"Failed to save device token for {user_id}:\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail="Failed to save device token")
-
-
-@app.post("/auth/request-otp")
-def request_otp(request: RequestOtpRequest):
-    try:
-        request_otp_use_case.execute(request.otp_recipient)
-        return {"message": "OTP sent"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/auth/verify-otp")
-def verify_otp(request: VerifyOtpRequest):
-    result = verify_otp_use_case.execute(request.otp_recipient, request.code)
-    if not result:
-        raise HTTPException(status_code=401, detail="Invalid or expired code")
-    return result
+    
 
 
