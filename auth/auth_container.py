@@ -20,4 +20,4 @@ class AuthContainer:
             token_service=JwtTokenService()
         )
 
-auth_container = AuthContainer()
+container = AuthContainer()

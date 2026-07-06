@@ -6,12 +6,6 @@ from preferences.data.postgres_user_preferences_repository import PostgresUserPr
 from preferences.domain.entity.user_preferences_entity import UserPreferencesEntity
 from preferences.domain.usecase.get_preferences_usecase import GetPreferencesUseCase
 from preferences.domain.usecase.save_preferences_usecase import SavePreferencesUseCase
-from topic.data.postgres_topic_repository import TopicRepositoryPostgres
-from topic.data.default_topic_repository_impl import DefaultTopicRepositoryImpl
-from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
-from topic.domain.usecase.delete_topic_usecase import DeleteTopicUseCase
-from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
-from topic.domain.usecase.get_default_topics_usecase import GetDefaultTopicsUseCase
 from user.data.postgres_device_token_repository import PostgresDeviceTokenRepository
 from notifier.data.push_digest_notifier import PushDigestNotifier
 from fastapi import FastAPI, HTTPException, Depends
@@ -20,8 +14,9 @@ from pydantic import BaseModel
 from typing import List
 from digest.fetcher.articles_fetcher import ArticlesFetcher
 
-
 from auth.auth_routes import router as auth_router
+from topic.topic_routes import router as topic_router
+from topic.topic_container import container as topic_container
 
 
 from preferences.domain.usecase.get_all_preferences_usecase import GetAllPreferencesUseCase
@@ -29,9 +24,6 @@ from scheduler.digest_scheduler import DigestScheduler
 
 class MorninRequest(BaseModel):
     topics: List[str]
-
-class CreateTopicRequest(BaseModel):
-    name: str
 
 class SavePreferencesRequest(BaseModel):
     delivery_time: str
@@ -43,11 +35,10 @@ class DeviceTokenRequest(BaseModel):
 app = FastAPI()
 
 app.include_router(auth_router, tags=["auth"])
+app.include_router(topic_router, tags=["topics"])
 
 digest_repository_impl = PostgresDigestRepository()
-digest_repository_impl.init_db()  
-topic_repository_impl = TopicRepositoryPostgres()
-topic_repository_impl.init_db()
+digest_repository_impl.init_db()
 
 preferences_repository_impl = PostgresUserPreferencesRepository()
 preferences_repository_impl.init_db()
@@ -70,18 +61,13 @@ get_latest_digest_use_case = GetLatestDigestUseCase(
     digest_repository_impl,
 )
 
-create_topic_use_case = CreateTopicUseCase(topic_repository_impl)
-delete_topic_use_case = DeleteTopicUseCase(topic_repository_impl)
-get_all_topics_use_case = GetAllTopicsUseCase(topic_repository_impl)
-get_default_topics_use_case = GetDefaultTopicsUseCase(DefaultTopicRepositoryImpl())
-
 get_all_preferences_use_case = GetAllPreferencesUseCase(preferences_repository_impl)
 
 push_notifier = PushDigestNotifier(device_token_repository_impl)
 
 digest_scheduler = DigestScheduler(
     get_all_preferences_use_case=get_all_preferences_use_case,
-    get_all_topics_use_case=get_all_topics_use_case,
+    get_all_topics_use_case=topic_container.get_all_topics_use_case,
     create_digest_use_case=create_digest_use_case,
     digest_notifier=push_notifier
 )
@@ -116,37 +102,6 @@ def get_digest(user_id: str = Depends(get_current_user)):
     if not latest_digest:
         raise HTTPException(status_code=404, detail=f"No digest found for user {user_id}")
     return latest_digest
-
-@app.post("/topics", status_code=201)
-def create_topic(request: CreateTopicRequest, user_id: str = Depends(get_current_user)):
-    try:
-        topic = create_topic_use_case.execute(user_id, request.name)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return topic
-
-@app.delete("/topics/{topic_id}")
-def delete_topic(topic_id: str, user_id: str = Depends(get_current_user)):
-    try:
-        delete_topic_use_case.execute(user_id, topic_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"message": "Topic deleted"}
-
-@app.get("/topics/defaults")
-def get_default_topics():
-    return get_default_topics_use_case.execute()
-
-@app.get("/topics")
-def get_topics(user_id: str = Depends(get_current_user)):
-    try:
-        topics = get_all_topics_use_case.execute(user_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return topics
-
 
 @app.post("/preferences")
 def save_preferences(request: SavePreferencesRequest, user_id: str = Depends(get_current_user)):

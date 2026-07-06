@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 # from auth_request_models import RequestOtpRequest, VerifyOtpRequest
 from auth.auth_request_models import RequestOtpRequest, VerifyOtpRequest
-from auth.auth_container import auth_container
+from auth.auth_container import container as auth_container
 
 router = APIRouter(tags=["auth"])
 
