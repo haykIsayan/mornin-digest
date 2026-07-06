@@ -1,7 +1,3 @@
-from digest.data.postgres_digest_repository import PostgresDigestRepository
-from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
-from digest.domain.usecase.fetch_articles_usecase import FetchArticlesUseCase
-from digest.domain.usecase.get_digest_usecase import GetDigestUseCase as GetLatestDigestUseCase
 from preferences.data.postgres_user_preferences_repository import PostgresUserPreferencesRepository
 from preferences.domain.entity.user_preferences_entity import UserPreferencesEntity
 from preferences.domain.usecase.get_preferences_usecase import GetPreferencesUseCase
@@ -11,19 +7,16 @@ from notifier.data.push_digest_notifier import PushDigestNotifier
 from fastapi import FastAPI, HTTPException, Depends
 from auth.api.auth_middleware import get_current_user
 from pydantic import BaseModel
-from typing import List
-from digest.fetcher.articles_fetcher import ArticlesFetcher
 
 from auth.auth_routes import router as auth_router
 from topic.topic_routes import router as topic_router
 from topic.topic_container import container as topic_container
+from digest.digest_routes import router as digest_router
+from digest.digest_container import container as digest_container
 
 
 from preferences.domain.usecase.get_all_preferences_usecase import GetAllPreferencesUseCase
 from scheduler.digest_scheduler import DigestScheduler
-
-class MorninRequest(BaseModel):
-    topics: List[str]
 
 class SavePreferencesRequest(BaseModel):
     delivery_time: str
@@ -36,9 +29,7 @@ app = FastAPI()
 
 app.include_router(auth_router, tags=["auth"])
 app.include_router(topic_router, tags=["topics"])
-
-digest_repository_impl = PostgresDigestRepository()
-digest_repository_impl.init_db()
+app.include_router(digest_router, tags=["digest"])
 
 preferences_repository_impl = PostgresUserPreferencesRepository()
 preferences_repository_impl.init_db()
@@ -49,18 +40,6 @@ device_token_repository_impl.init_db()
 save_preferences_use_case = SavePreferencesUseCase(preferences_repository_impl)
 get_preferences_use_case = GetPreferencesUseCase(preferences_repository_impl)
 
-articles_fetcher = ArticlesFetcher()
-fetch_articles_use_case = FetchArticlesUseCase(articles_fetcher)
-
-create_digest_use_case = CreateDigestUseCase(
-    digest_repository_impl,
-    fetch_articles_use_case
-)
-
-get_latest_digest_use_case = GetLatestDigestUseCase(
-    digest_repository_impl,
-)
-
 get_all_preferences_use_case = GetAllPreferencesUseCase(preferences_repository_impl)
 
 push_notifier = PushDigestNotifier(device_token_repository_impl)
@@ -68,7 +47,7 @@ push_notifier = PushDigestNotifier(device_token_repository_impl)
 digest_scheduler = DigestScheduler(
     get_all_preferences_use_case=get_all_preferences_use_case,
     get_all_topics_use_case=topic_container.get_all_topics_use_case,
-    create_digest_use_case=create_digest_use_case,
+    create_digest_use_case=digest_container.create_digest_use_case,
     digest_notifier=push_notifier
 )
 
@@ -84,24 +63,6 @@ def _stop_digest_scheduler():
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-@app.post("/digest")
-def create_digest(request: MorninRequest, user_id: str = Depends(get_current_user)):
-    try:
-        digest = create_digest_use_case.execute(user_id, request.topics)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    print(digest)
-    return digest
-
-@app.get("/digest")
-def get_digest(user_id: str = Depends(get_current_user)):
-    latest_digest = get_latest_digest_use_case.execute(user_id)
-    if not latest_digest:
-        raise HTTPException(status_code=404, detail=f"No digest found for user {user_id}")
-    return latest_digest
 
 @app.post("/preferences")
 def save_preferences(request: SavePreferencesRequest, user_id: str = Depends(get_current_user)):
