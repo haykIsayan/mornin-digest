@@ -6,6 +6,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake"
+      ANTHROPIC_API_KEY: "sk-ant-fake"
+      JWT_SECRET: "test-secret"
+      UPSTASH_REDIS_URL: "redis://fake:fake@localhost:6379"
+      RESEND_API_KEY: "re_fake"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
