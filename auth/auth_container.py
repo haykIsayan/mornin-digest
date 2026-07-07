@@ -10,12 +10,14 @@ class AuthContainer:
         self.user_repository = PostgresUserRepository()
         self.user_repository.init_db()
 
+        otp_store = RedisOtpStore()
+
         self.request_otp_use_case = RequestOtpUseCase(
             otp_sender=EmailSender(),
-            otp_store=RedisOtpStore()
+            otp_store=otp_store
         )
         self.verify_otp_use_case = VerifyOtpUseCase(
-            otp_store=RedisOtpStore(),
+            otp_store=otp_store,
             user_repository=self.user_repository,
             token_service=JwtTokenService()
         )
