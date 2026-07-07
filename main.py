@@ -1,218 +1,30 @@
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from auth.auth_routes import router as auth_router
+from topic.topic_routes import router as topic_router
+from digest.digest_routes import router as digest_router
+from preferences.preferences_routes import router as preferences_router
+from user.user_routes import router as user_router
+from scheduler.scheduler_container import container as scheduler_container
 
-from auth.data.email_sender import EmailSender
-from auth.data.otp_store import RedisOtpStore
-from auth.data.token_service import JwtTokenService
-from auth.domain.usecase.request_otp_usecase import RequestOtpUseCase
-from auth.domain.usecase.verify_otp_usecase import VerifyOtpUseCase
-from auth.data.postgres_user_repository import PostgresUserRepository
-from digest.data.postgres_digest_repository import PostgresDigestRepository
-from digest.domain.usecase.create_digest_usecase import CreateDigestUseCase
-from digest.domain.usecase.fetch_articles_usecase import FetchArticlesUseCase
-from digest.domain.usecase.get_digest_usecase import GetDigestUseCase as GetLatestDigestUseCase
-from preferences.data.postgres_user_preferences_repository import PostgresUserPreferencesRepository
-from preferences.domain.entity.user_preferences_entity import UserPreferencesEntity
-from preferences.domain.usecase.get_preferences_usecase import GetPreferencesUseCase
-from preferences.domain.usecase.save_preferences_usecase import SavePreferencesUseCase
-from topic.data.postgres_topic_repository import TopicRepositoryPostgres
-from topic.data.default_topic_repository_impl import DefaultTopicRepositoryImpl
-from topic.domain.usecase.create_topic_usecase import CreateTopicUseCase
-from topic.domain.usecase.delete_topic_usecase import DeleteTopicUseCase
-from topic.domain.usecase.get_all_topics_usecase import GetAllTopicsUseCase
-from topic.domain.usecase.get_default_topics_usecase import GetDefaultTopicsUseCase
-from user.data.postgres_device_token_repository import PostgresDeviceTokenRepository
-from notifier.data.push_digest_notifier import PushDigestNotifier
-from fastapi import FastAPI, HTTPException, Depends
-from auth.api.auth_middleware import get_current_user
-from pydantic import BaseModel
-from typing import List
-from digest.fetcher.articles_fetcher import ArticlesFetcher
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    scheduler_container.digest_scheduler.start()
+    yield
+    # Shutdown
+    if scheduler_container.digest_scheduler.scheduler.running:
+        scheduler_container.digest_scheduler.scheduler.shutdown(wait=False)
 
+app = FastAPI(lifespan=lifespan)
 
-from preferences.domain.usecase.get_all_preferences_usecase import GetAllPreferencesUseCase
-from scheduler.digest_scheduler import DigestScheduler
-
-class RequestOtpRequest(BaseModel):
-    otp_recipient: str
-
-class VerifyOtpRequest(BaseModel):
-    otp_recipient: str
-    code: str
-
-class MorninRequest(BaseModel):
-    topics: List[str]
-
-class CreateTopicRequest(BaseModel):
-    name: str
-
-class SavePreferencesRequest(BaseModel):
-    delivery_time: str
-    timezone: str
-
-class DeviceTokenRequest(BaseModel):
-    token: str
-
-app = FastAPI()
-
-user_repository_impl = PostgresUserRepository()
-user_repository_impl.init_db()
-
-email_sender = EmailSender()
-otp_store = RedisOtpStore()
-token_service = JwtTokenService()
-
-request_otp_use_case = RequestOtpUseCase(otp_sender=email_sender, otp_store=otp_store)
-verify_otp_use_case = VerifyOtpUseCase(otp_store, user_repository_impl, token_service)
-
-digest_repository_impl = PostgresDigestRepository()
-digest_repository_impl.init_db()  
-topic_repository_impl = TopicRepositoryPostgres()
-topic_repository_impl.init_db()
-
-preferences_repository_impl = PostgresUserPreferencesRepository()
-preferences_repository_impl.init_db()
-
-device_token_repository_impl = PostgresDeviceTokenRepository()
-device_token_repository_impl.init_db()
-
-save_preferences_use_case = SavePreferencesUseCase(preferences_repository_impl)
-get_preferences_use_case = GetPreferencesUseCase(preferences_repository_impl)
-
-articles_fetcher = ArticlesFetcher()
-fetch_articles_use_case = FetchArticlesUseCase(articles_fetcher)
-
-create_digest_use_case = CreateDigestUseCase(
-    digest_repository_impl,
-    fetch_articles_use_case
-)
-
-get_latest_digest_use_case = GetLatestDigestUseCase(
-    digest_repository_impl,
-)
-
-create_topic_use_case = CreateTopicUseCase(topic_repository_impl)
-delete_topic_use_case = DeleteTopicUseCase(topic_repository_impl)
-get_all_topics_use_case = GetAllTopicsUseCase(topic_repository_impl)
-get_default_topics_use_case = GetDefaultTopicsUseCase(DefaultTopicRepositoryImpl())
-
-get_all_preferences_use_case = GetAllPreferencesUseCase(preferences_repository_impl)
-
-push_notifier = PushDigestNotifier(device_token_repository_impl)
-
-digest_scheduler = DigestScheduler(
-    get_all_preferences_use_case=get_all_preferences_use_case,
-    get_all_topics_use_case=get_all_topics_use_case,
-    create_digest_use_case=create_digest_use_case,
-    digest_notifier=push_notifier
-)
-
-@app.on_event("startup")
-def _start_digest_scheduler():
-    digest_scheduler.start()
-
-@app.on_event("shutdown")
-def _stop_digest_scheduler():
-    if digest_scheduler.scheduler.running:
-        digest_scheduler.scheduler.shutdown(wait=False)
+app.include_router(auth_router, tags=["auth"])
+app.include_router(topic_router, tags=["topics"])
+app.include_router(digest_router, tags=["digest"])
+app.include_router(preferences_router, tags=["preferences"])
+app.include_router(user_router, tags=["user"])
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-@app.post("/digest")
-def create_digest(request: MorninRequest, user_id: str = Depends(get_current_user)):
-    try:
-        digest = create_digest_use_case.execute(user_id, request.topics)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    print(digest)
-    return digest
-
-@app.get("/digest")
-def get_digest(user_id: str = Depends(get_current_user)):
-    latest_digest = get_latest_digest_use_case.execute(user_id)
-    if not latest_digest:
-        raise HTTPException(status_code=404, detail=f"No digest found for user {user_id}")
-    return latest_digest
-
-@app.post("/topics", status_code=201)
-def create_topic(request: CreateTopicRequest, user_id: str = Depends(get_current_user)):
-    try:
-        topic = create_topic_use_case.execute(user_id, request.name)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return topic
-
-@app.delete("/topics/{topic_id}")
-def delete_topic(topic_id: str, user_id: str = Depends(get_current_user)):
-    try:
-        delete_topic_use_case.execute(user_id, topic_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"message": "Topic deleted"}
-
-@app.get("/topics/defaults")
-def get_default_topics():
-    return get_default_topics_use_case.execute()
-
-@app.get("/topics")
-def get_topics(user_id: str = Depends(get_current_user)):
-    try:
-        topics = get_all_topics_use_case.execute(user_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return topics
-
-
-@app.post("/preferences")
-def save_preferences(request: SavePreferencesRequest, user_id: str = Depends(get_current_user)):
-    try:
-        preferences = UserPreferencesEntity(
-            user_id=user_id,
-            delivery_time=request.delivery_time,
-            timezone=request.timezone
-        )
-        result = save_preferences_use_case.execute(preferences)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/preferences")
-def get_preferences(user_id: str = Depends(get_current_user)):
-    result = get_preferences_use_case.execute(user_id)
-    if not result:
-        raise HTTPException(status_code=404, detail=f"No preferences found for user {user_id}")
-    return result
-
-
-@app.post("/device-token")
-def save_device_token(request: DeviceTokenRequest, user_id: str = Depends(get_current_user)):
-    try:
-        device_token_repository_impl.save_token(user_id, request.token)
-        return {"message": "Device token saved"}
-    except Exception:
-        import traceback
-        print(f"Failed to save device token for {user_id}:\n{traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail="Failed to save device token")
-
-
-@app.post("/auth/request-otp")
-def request_otp(request: RequestOtpRequest):
-    try:
-        request_otp_use_case.execute(request.otp_recipient)
-        return {"message": "OTP sent"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/auth/verify-otp")
-def verify_otp(request: VerifyOtpRequest):
-    result = verify_otp_use_case.execute(request.otp_recipient, request.code)
-    if not result:
-        raise HTTPException(status_code=401, detail="Invalid or expired code")
-    return result
-
 
