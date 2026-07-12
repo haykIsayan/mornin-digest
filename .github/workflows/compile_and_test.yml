@@ -6,6 +6,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake"
+      ANTHROPIC_API_KEY: "sk-ant-fake"
+      JWT_SECRET: "test-secret"
+      UPSTASH_REDIS_URL: "redis://fake:fake@localhost:6379"
+      RESEND_API_KEY: "re_fake"
+      FIREBASE_CREDENTIALS_JSON: '{"type": "service_account", "project_id": "fake-project", "private_key_id": "fakekeyid", "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC80TkMKup8V9S1\nYbtDi4DxOmn/WDHGyhxnDwZ7WjElc408ega/2x2DwNOFVAU1i2SoI1vxKDsc3zjQ\n//43SoV5MIwHy1KG1UFb4b+Ut6VrN5yRP//d0AAWtufnegflTihqpcNv5Vue8R6I\nMwfPMHvj65ETmfC27RWW876KGmpFEe9VLY2ktCuZAhgE40zyW6AL+bcCKcPlz8K/\nL5E4DV7AHjh4UBaqtBpYQYcjRm2/RxM8XZNDkLqq8eZ0GFMOZ5FHaSRsG7hM6zQ3\npCYn6ZhjXA2/Tc8kSYj557F7YyRJ5ebSOIvIdbCZEk6DqzvnM3g17fILeFqQC+XX\nGJ8UDDVzAgMBAAECggEABgqnyaTh5eKlkrwy0sF2+cEFvT7kMNksuXt4mJ/VLL6a\nyVGaP69SLXIREpYSqJjyOpMPERNZeN4HomBekQRYav1LrcAqvte6BKefirGpoFmi\nL9+dX0qVhiSKHRUBhavPjUIKk90B5n8OnAsN9+o0PKG//aGSWzgQ1cis0xxvRBB1\nvHpqyx5rhosSNhSsMCIf68NXdvQPl3pPezo10/ytONqvfqQqB0GhZXUoYakLlUV0\n9t0lkT/j+Ejidy88oGlmHt/1wIqulMkOUB9fF6gILYMlVlBFAD5XM5ta1dx4LNrx\nFEhNX0SdTpNluiYHMpxmLsig3GM2QnM6SmCLC8apSQKBgQDtbeg8EiF8enzIvjfb\np88DJNuB0LAWSiKK6fl+osMqcs4QRVbrn62gGPyXO5G1CUQ6Bw4QhhfF6SZBecwi\nyHgYyGcaWeiGadt037ilQCx26KCLbR1d2h051vlbI0GtO50IBV5CA6Fli+Uvsl5Q\nU2LXaTfTATPoThqZiPgr9KUHPQKBgQDLlfKEDEKFfqVyS1KofqOOohx4i4Fst+OM\nXjjAZlmPjWp7yI/aqeRWd5orA3zm0XlbyzXSSZA/FPL8AwBmhOzXj/eWCN50+TO/\nsBmASpuUShr+TCIe8hzAMCtx6GQdp3rPBk4u9sLjQs4bFqvbBMmSnbvnAPr/bB9a\ng71kT+d6bwKBgQC5nZnYFIiPSybwvRzoITmKiK7+vspaspxso1xErzQKpHQKblr0\nnAHdzoryJETWFid7gfZx3pMJSyt4NqLrcnPJVCqehDlvk6RYq2or7o6Ua2rPdX9m\n1tTQWgrZQCfhKWCrW58D1ti/jW2gKz7mZzo3k29sC12sOBs9esIhgwHdNQKBgA0y\nMv4MLWOpyd+WskzpqIBeUaoeoM0DPmSi1trhx3xelkBfx7NMv9g6+GtBVp8/hLZG\nfb6bthXgrb9YEnaStydh1ZKMEJ9UZ95M89o0+9Co3QcOuEd5OhPbC3Xesl6ZtIQm\nzHqO1CMW+XUYCxuvO8GdJ8jZb2uO/plHYMdXxpFRAoGBAL3RfrN4wRdEHX9VKz4X\n0Ft8/rab05jshybZsEc7GLHMTCsB8TuOrvGi0pDPSIthx+1m8oL4irZGOW7a48ck\n+7Nmnxbz/3t/jW587V8VGxsB/yz58unHynW5dmAqHO6aXKgX7cCe7fVgtUwqDJus\n1MF1aUYKcBde2IhpsGQPCNAK\n-----END PRIVATE KEY-----\n", "client_email": "fake@fake-project.iam.gserviceaccount.com", "client_id": "000000000000000000000", "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token", "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs", "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/fake%40fake-project.iam.gserviceaccount.com"}'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

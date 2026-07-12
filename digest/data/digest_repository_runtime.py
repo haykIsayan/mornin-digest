@@ -4,7 +4,7 @@ from digest.domain.repository.digest_repository import DigestRepository
 from digest.domain.entity.digest_entity import DigestEntity
 
 
-class DigestRepositoryLocal(DigestRepository):
+class DigestRepositoryRuntime(DigestRepository):
 
     def __init__(self):
         self.user_digests = {}
