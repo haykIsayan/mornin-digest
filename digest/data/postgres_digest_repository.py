@@ -4,6 +4,7 @@ import os
 from typing import Optional
 from dotenv import load_dotenv
 
+from digest.domain.entity.article_entity import ArticleEntity
 from digest.domain.entity.digest_entity import DigestEntity
 from digest.domain.repository.digest_repository import DigestRepository
 
@@ -31,7 +32,7 @@ class PostgresDigestRepository(DigestRepository):
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS articles (
-                id SERIAL PRIMARY KEY,
+                id TEXT PRIMARY KEY,
                 digest_id TEXT NOT NULL REFERENCES digests(id),
                 topic TEXT,
                 title TEXT,
@@ -47,10 +48,23 @@ class PostgresDigestRepository(DigestRepository):
         conn.close()
         
     def create_digest(self, user_id: str, articles: list[dict]) -> DigestEntity:
+        article_entities = [
+            ArticleEntity(
+                article_id=str(uuid.uuid4()),
+                topic=article.get("topic"),
+                title=article.get("title"),
+                summary=article.get("summary"),
+                source=article.get("source"),
+                url=article.get("url"),
+                published_date=article.get("published_date"),
+            )
+            for article in articles
+        ]
+
         entity = DigestEntity(
             digest_id=str(uuid.uuid4()),
             user_id=user_id,
-            articles=articles
+            articles=article_entities
         )
 
         conn = self._get_connection()
@@ -61,20 +75,21 @@ class PostgresDigestRepository(DigestRepository):
                         "INSERT INTO digests (id, user_id, created_at) VALUES (%s, %s, %s)",
                         (entity.digest_id, entity.user_id, entity.created_at)
                     )
-                    for article in articles:
+                    for article in article_entities:
                         cursor.execute(
                             """
-                            INSERT INTO articles (digest_id, topic, title, summary, source, url, published_date)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            INSERT INTO articles (id, digest_id, topic, title, summary, source, url, published_date)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                             """,
                             (
+                                article.article_id,
                                 entity.digest_id,
-                                article.get("topic"),
-                                article.get("title"),
-                                article.get("summary"),
-                                article.get("source"),
-                                article.get("url"),
-                                article.get("published_date"),
+                                article.topic,
+                                article.title,
+                                article.summary,
+                                article.source,
+                                article.url,
+                                article.published_date,
                             )
                         )
         finally:
@@ -98,18 +113,19 @@ class PostgresDigestRepository(DigestRepository):
                 digest_id, created_at = row
 
                 cursor.execute(
-                    "SELECT topic, title, summary, source, url, published_date FROM articles WHERE digest_id = %s",
+                    "SELECT id, topic, title, summary, source, url, published_date FROM articles WHERE digest_id = %s",
                     (digest_id,)
                 )
                 articles = [
-                    {
-                        "topic": r[0],
-                        "title": r[1],
-                        "summary": r[2],
-                        "source": r[3],
-                        "url": r[4],
-                        "published_date": r[5],
-                    }
+                    ArticleEntity(
+                        article_id=r[0],
+                        topic=r[1],
+                        title=r[2],
+                        summary=r[3],
+                        source=r[4],
+                        url=r[5],
+                        published_date=r[6],
+                    )
                     for r in cursor.fetchall()
                 ]
         finally:
