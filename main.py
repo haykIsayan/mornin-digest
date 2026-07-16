@@ -6,6 +6,7 @@ from digest.digest_routes import router as digest_router
 from preferences.preferences_routes import router as preferences_router
 from user.user_routes import router as user_router
 from scheduler.scheduler_container import container as scheduler_container
+from tts.tts_routes import router as tts_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +24,7 @@ app.include_router(topic_router, tags=["topics"])
 app.include_router(digest_router, tags=["digest"])
 app.include_router(preferences_router, tags=["preferences"])
 app.include_router(user_router, tags=["user"])
+app.include_router(tts_router, tags=["tts"])
 
 @app.get("/health")
 def health():
