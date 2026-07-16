@@ -1,3 +1,5 @@
 .env
 .claude/
 mornin-mobile-firebase-adminsdk-fbsvc-d59722e323.json
+.DS_Store
+*.mp3

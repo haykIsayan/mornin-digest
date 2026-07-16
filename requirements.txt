@@ -10,3 +10,4 @@ redis
 PyJWT
 resend
 firebase-admin
+speechify-api
